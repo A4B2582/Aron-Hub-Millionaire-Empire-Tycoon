@@ -1,0 +1,355 @@
+-- =================================================================
+-- PROJECT: Aron Hub | Millionaire Empire Tycoon (Pro Scrolling & Custom Fly)
+-- YAPIMCI: qmiracxws
+-- =================================================================
+
+-- 1. Güvenli Kütüphane Yükleme (Alternatif Bağlantı)
+local Success, WindUI = pcall(function()
+    return loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+end)
+
+if not Success or not WindUI then
+    -- Yedek bağlantı
+    Success, WindUI = pcall(function()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/refs/heads/main/dist/main.lua"))()
+    end)
+end
+
+if not Success or not WindUI then
+    warn("[Aron Hub] WindUI yüklenemedi! İnternet bağlantınızı veya executor sürümünüzü kontrol edin.")
+    return
+end
+
+-- 2. Servisler ve Yapılandırma Altyapısı
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+local Config = {
+    CustomMoneyAmount = 999999,
+    FlySpeed = 50,
+    WalkSpeedValue = 16,
+}
+
+-- 3. Ana Pencere Yapılandırması (Tüm sekmeler için otomatik Scroll/Kaydırma özellikli)
+local Window = WindUI:CreateWindow({
+    Title = "Aron Hub | Millionaire Empire",
+    Icon = "rbxassetid://6023426915",
+    Author = "qmiracxws",
+    Folder = "AronHubConfig",
+    Size = UDim2.fromOffset(500, 360),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = false,
+})
+
+-- 4. Modüler Sekmelerin Tanımlanması (Scrolling özellikli Tab altyapısı)
+local Tabs = {
+    Main = Window:Tab({ Title = "Ana Sayfa", Icon = "home", Scrollable = true }),
+    Visuals = Window:Tab({ Title = "Visuals", Icon = "eye", Scrollable = true }),
+    Settings = Window:Tab({ Title = "Ayarlar", Icon = "settings", Scrollable = true }),
+}
+
+-- =================================================================
+-- ANA SAYFA (EKONOMİ VE OYUN ÖZEL ÖZELLİKLERİ)
+-- =================================================================
+
+local MainSection = Tabs.Main:Section({ Title = "Millionaire Empire Kontrolleri" })
+
+MainSection:Paragraph({
+    Title = "Aron Hub Aktif!",
+    Content = "Yapımcı: qmiracxws\nDurum: Kaydırma ve Kontrollü Fly aktif.",
+})
+
+-- Özel Miktar Giriş Inputu
+MainSection:Input({
+    Title = "Eklenecek Miktar (Custom Money)",
+    Placeholder = "Miktar gir (Örn: 50000)",
+    Default = "999999",
+    Callback = function(Value)
+        local num = tonumber(Value)
+        if num then
+            Config.CustomMoneyAmount = num
+            WindUI:Notify({
+                Title = "Para Miktarı Güncellendi",
+                Content = "Yeni Miktar: " .. num,
+                Duration = 2,
+            })
+        end
+    end,
+})
+
+-- Sınırsız Para Döngüsü (Auto-Farm)
+local MoneyLoop = nil
+
+MainSection:Toggle({
+    Title = "Özel Miktar Para Döngüsü",
+    Desc = "ReplicatedStorage.fewjnfejwb3 tetikler.",
+    Default = false,
+    Callback = function(State)
+        if State then
+            MoneyLoop = task.spawn(function()
+                while true do
+                    pcall(function()
+                        local moneyEvent = ReplicatedStorage:FindFirstChild("fewjnfejwb3")
+                        if moneyEvent and moneyEvent:IsA("RemoteEvent") then
+                            moneyEvent:FireServer(Config.CustomMoneyAmount)
+                        end
+                    end)
+                    task.wait(0.8)
+                end
+            end)
+            
+            WindUI:Notify({
+                Title = "Ekonomi Modülü",
+                Content = "Özel miktar para döngüsü başlatıldı.",
+                Duration = 3,
+            })
+        else
+            if MoneyLoop then
+                task.cancel(MoneyLoop)
+                MoneyLoop = nil
+            end
+            
+            WindUI:Notify({
+                Title = "Ekonomi Modülü",
+                Content = "Özel miktar para döngüsü durduruldu.",
+                Duration = 3,
+            })
+        end
+    end,
+})
+
+-- =================================================================
+-- VISUALS SEKMESİ (KONTROLLÜ FLY, WALKSPEED VE NOCLIP)
+-- =================================================================
+
+local VisualsSection = Tabs.Visuals:Section({ Title = "Görsel ve Hareket Araçları" })
+
+-- 1. Kontrollü Uçuş (Fly) Modülü
+local FlyConnection = nil
+local FlyActive = false
+local KeysPressed = {W = false, S = false, A = false, D = false, Space = false, Shift = false}
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.W then KeysPressed.W = true end
+    if input.KeyCode == Enum.KeyCode.S then KeysPressed.S = true end
+    if input.KeyCode == Enum.KeyCode.A then KeysPressed.A = true end
+    if input.KeyCode == Enum.KeyCode.D then KeysPressed.D = true end
+    if input.KeyCode == Enum.KeyCode.Space then KeysPressed.Space = true end
+    if input.KeyCode == Enum.KeyCode.LeftShift then KeysPressed.Shift = true end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.W then KeysPressed.W = false end
+    if input.KeyCode == Enum.KeyCode.S then KeysPressed.S = false end
+    if input.KeyCode == Enum.KeyCode.A then KeysPressed.A = false end
+    if input.KeyCode == Enum.KeyCode.D then KeysPressed.D = false end
+    if input.KeyCode == Enum.KeyCode.Space then KeysPressed.Space = false end
+    if input.KeyCode == Enum.KeyCode.LeftShift then KeysPressed.Shift = false end
+end)
+
+VisualsSection:Slider({
+    Title = "Uçuş Hızı (Fly Speed)",
+    Desc = "Uçarken hareket etme hızını ayarlar.",
+    Min = 10,
+    Max = 200,
+    Default = 50,
+    Step = 5,
+    Callback = function(Value)
+        Config.FlySpeed = Value
+    end,
+})
+
+VisualsSection:Toggle({
+    Title = "Uçuş Modu (Fly)",
+    Desc = "Karakteri tamamen senin kontrolünde tutarak uçurur.",
+    Default = false,
+    Callback = function(State)
+        FlyActive = State
+        
+        local char = LocalPlayer.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+        local hrp = char.HumanoidRootPart
+        local humanoid = char:FindFirstChildOfClass("Humanoid")
+        
+        if FlyActive then
+            if humanoid then humanoid.PlatformStand = true end
+            
+            -- Otomatik fırlama yok: Sadece tuşlara bastıkça veya yön verdiğinde hareket eder
+            FlyConnection = RunService.RenderStepped:Connect(function()
+                pcall(function()
+                    if not FlyActive or not char or not hrp.Parent then return end
+                    
+                    local camera = workspace.CurrentCamera
+                    local moveDir = Vector3.new(0, 0, 0)
+                    local camCFrame = camera.CFrame
+                    
+                    if KeysPressed.W then moveDir = moveDir + camCFrame.LookVector end
+                    if KeysPressed.S then moveDir = moveDir - camCFrame.LookVector end
+                    if KeysPressed.A then moveDir = moveDir - camCFrame.RightVector end
+                    if KeysPressed.D then moveDir = moveDir + camCFrame.RightVector end
+                    if KeysPressed.Space then moveDir = moveDir + Vector3.new(0, 1, 0) end
+                    if KeysPressed.Shift then moveDir = moveDir - Vector3.new(0, 1, 0) end
+                    
+                    if moveDir.Magnitude > 0 then
+                        hrp.Velocity = moveDir.Unit * Config.FlySpeed
+                    else
+                        hrp.Velocity = Vector3.new(0, 0.1, 0) -- Havada asılı kalma (düşmeme)
+                    end
+                end)
+            end)
+            
+            WindUI:Notify({
+                Title = "Uçuş Modülü",
+                Content = "Kontrollü uçuş etkinleştirildi.",
+                Duration = 3,
+            })
+        else
+            if FlyConnection then
+                FlyConnection:Disconnect()
+                FlyConnection = nil
+            end
+            
+            if humanoid then humanoid.PlatformStand = false end
+            if hrp then hrp.Velocity = Vector3.new(0, 0, 0) end
+            
+            WindUI:Notify({
+                Title = "Uçuş Modülü",
+                Content = "Uçuş modu kapatıldı.",
+                Duration = 3,
+            })
+        end
+    end,
+})
+
+-- 2. Karakter Hızı (WalkSpeed) Modülü
+VisualsSection:Slider({
+    Title = "Karakter Hızı (WalkSpeed)",
+    Desc = "Karakterin yürüme hızını ayarlar.",
+    Min = 16,
+    Max = 150,
+    Default = 16,
+    Step = 1,
+    Callback = function(Value)
+        Config.WalkSpeedValue = Value
+        pcall(function()
+            local char = LocalPlayer.Character
+            if char then
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hum then
+                    hum.WalkSpeed = Value
+                end
+            end
+        end)
+    end,
+})
+
+-- 3. Noclip (Duvardan Geçme) Modülü
+local NoclipConnection = nil
+local NoclipActive = false
+
+VisualsSection:Toggle({
+    Title = "Duvardan Geçme (Noclip)",
+    Desc = "Duvarlardan ve engellerden geçmenizi sağlar.",
+    Default = false,
+    Callback = function(State)
+        NoclipActive = State
+        
+        if NoclipActive then
+            NoclipConnection = RunService.Stepped:Connect(function()
+                pcall(function()
+                    if not NoclipActive then return end
+                    local char = LocalPlayer.Character
+                    if char then
+                        for _, part in pairs(char:GetDescendants()) do
+                            if part:IsA("BasePart") then
+                                part.CanCollide = false
+                            end
+                        end
+                    end
+                end)
+            end)
+            
+            WindUI:Notify({
+                Title = "Noclip Modülü",
+                Content = "Duvardan geçme etkinleştirildi.",
+                Duration = 3,
+            })
+        else
+            if NoclipConnection then
+                NoclipConnection:Disconnect()
+                NoclipConnection = nil
+            end
+            
+            pcall(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, part in pairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = true
+                        end
+                    end
+                end
+            end)
+            
+            WindUI:Notify({
+                Title = "Noclip Modülü",
+                Content = "Duvardan geçme kapatıldı.",
+                Duration = 3,
+            })
+        end
+    end,
+})
+
+-- Karakter Yenilendiğinde Ayarların Korunması
+LocalPlayer.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid", 5)
+    task.wait(0.5)
+    pcall(function()
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.WalkSpeed = Config.WalkSpeedValue
+        end
+    end)
+end)
+
+-- =================================================================
+-- AYARLAR SEKMESİ
+-- =================================================================
+
+local SettingsSection = Tabs.Settings:Section({ Title = "Sistem" })
+
+SettingsSection:Button({
+    Title = "Menüyü Gizle / Göster",
+    Callback = function()
+        Window:Toggle()
+    end,
+})
+
+SettingsSection:Button({
+    Title = "Script'i Kapat (Unload)",
+    Callback = function()
+        if FlyConnection then FlyConnection:Disconnect() end
+        if NoclipConnection then NoclipConnection:Disconnect() end
+        pcall(function()
+            local char = LocalPlayer.Character
+            if char then
+                for _, part in pairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = true end
+                end
+            end
+        end)
+        Window:Destroy()
+    end,
+})
+
+-- Başlangıç Bildirimi
+WindUI:Notify({
+    Title = "Aron Hub Yüklendi!",
+    Content = "Yapımcı: qmiracxws | Kaydırma ve Uçuş güncellendi.",
+    Duration = 4,
+})
