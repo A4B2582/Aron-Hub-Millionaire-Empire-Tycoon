@@ -1,5 +1,5 @@
 -- =================================================================
--- PROJECT: Aron Hub | Millionaire Empire Tycoon (Pro Scrolling & Custom Fly)
+-- PROJECT: Aselsan Hub | Millionaire Empire Tycoon (Pro Scrolling & Custom Fly)
 -- YAPIMCI: qmiracxws
 -- =================================================================
 
@@ -16,7 +16,7 @@ if not Success or not WindUI then
 end
 
 if not Success or not WindUI then
-    warn("[Aron Hub] WindUI yüklenemedi! İnternet bağlantınızı veya executor sürümünüzü kontrol edin.")
+    warn("[Aselsan Hub] WindUI yüklenemedi! İnternet bağlantınızı veya executor sürümünüzü kontrol edin.")
     return
 end
 
@@ -35,10 +35,10 @@ local Config = {
 
 -- 3. Ana Pencere Yapılandırması (Tüm sekmeler için otomatik Scroll/Kaydırma özellikli)
 local Window = WindUI:CreateWindow({
-    Title = "Aron Hub | Millionaire Empire",
+    Title = "Aselsan Hub | Millionaire Empire",
     Icon = "rbxassetid://6023426915",
     Author = "qmiracxws",
-    Folder = "AronHubConfig",
+    Folder = "AselsanHubConfig",
     Size = UDim2.fromOffset(500, 360),
     Transparent = true,
     Theme = "Dark",
@@ -59,7 +59,7 @@ local Tabs = {
 local MainSection = Tabs.Main:Section({ Title = "Millionaire Empire Kontrolleri" })
 
 MainSection:Paragraph({
-    Title = "Aron Hub Aktif!",
+    Title = "Aselsan Hub Aktif!",
     Content = "Yapımcı: qmiracxws\nDurum: Kaydırma ve Kontrollü Fly aktif.",
 })
 
@@ -349,7 +349,7 @@ SettingsSection:Button({
 
 -- Başlangıç Bildirimi
 WindUI:Notify({
-    Title = "Aron Hub Yüklendi!",
-    Content = "Yapımcı: qmiracxws | Kaydırma ve Uçuş güncellendi.",
+    Title = "Aselsan Hub Yüklendi!",
+    Content = "Yapımcı: qmiracxws | Kaydırma og Uçuş güncellendi.",
     Duration = 4,
 })
